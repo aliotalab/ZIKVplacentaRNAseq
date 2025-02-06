@@ -131,3 +131,15 @@ p3 <- ggplot(log2.cpm.filtered.norm.df.pivot) +
 # we'll use the 'plot_grid' function from the cowplot package to put these together in a figure
 plot_grid(p1, p2, p3, labels = c('A', 'B', 'C'), label_size = 12, nrow = 1)
 ```
+#Filtering was carried out to remove lowly expressed genes. Genes with less than 1 count per million (CPM) in at least 5 or more samples filtered out.  This reduced the number of genes from `r nrow(myDGEList)` to `r nrow(myDGEList.filtered)`. 
+
+
+
+
+
+
+
+
+
+
+
