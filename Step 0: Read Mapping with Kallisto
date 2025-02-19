@@ -2,15 +2,15 @@
 # To run this 'shell script' you will need to open your terminal and navigate to the directory where this script resides on your computer.
 # This should be the same directory where you fastq files and reference fasta file are found.
 # Change permissions on your computer so that you can run a shell script by typing: 'chmod 777 readMapping.sh' (without the quotes) at the terminal prompt 
-# Then type './readMapping.sh' (without the quotes) at the prompt.  
+# Then type './readMapping.sh' (without the quotes) at the prompt. 'readMapping.sh' is the name of this file.
 # This will begin the process of running each line of code in the shell script.
 
-# first use fastqc to check the quality of our fastq files:
-#fastqc *.gz -t 8 [already completed by UMGC]
+# first use fastqc to check the quality of our fastq files. This step can be ignored if an external service already conducted a quality check.
+#fastqc *.gz -t 8 
 
 # next, we want to build an index from our reference fasta file 
 # I get my reference mammalian transcriptome files from here: https://useast.ensembl.org/info/data/ftp/index.html
-# kallisto index -i Mus_musculus.GRCm39.cdna.all.index Mus_musculus.GRCm39.cdna.all.fa
+kallisto index -i Mus_musculus.GRCm39.cdna.all.index Mus_musculus.GRCm39.cdna.all.fa
 
 # now map reads to the indexed reference host transcriptome
 # use as many 'threads' as your machine will allow in order to speed up the read mapping process.
@@ -18,6 +18,8 @@
 # this takes the information that would've been printed to our terminal, and outputs this in a log file that is saved in /data/course_data
 
 # read mapping code
+
+conda activate rnaseq
 
 kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o BRA_E11_C_F_A32_C4 -t 16 BRA_E11_C_F_A32_C4_S81_L001_R2_001.fastq.gz BRA_E11_C_F_A32_C4_S81_L001_R1_001.fastq.gz &> BRA_E11_C_F_A32_C4.log
 kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o BRA_E11_C_F_A32_C5 -t 16 BRA_E11_C_F_A32_C5_S82_L001_R2_001.fastq.gz BRA_E11_C_F_A32_C5_S82_L001_R1_001.fastq.gz &> BRA_E11_C_F_A32_C5.log
@@ -220,7 +222,64 @@ kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o PBS_E9_D_F_A9_D2 -t 16 P
 kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o PBS_E9_D_F_A9_D3 -t 16 PBS_E9_D_F_A9_D3_S7_L001_R2_001.fastq.gz PBS_E9_D_F_A9_D3_S7_L001_R1_001.fastq.gz &> PBS_E9_D_F_A9_D3.log
 kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o PBS_E9_D_F_A3_D5 -t 16 PBS_E9_D_F_A3_D5_S3_L001_R2_001.fastq.gz PBS_E9_D_F_A3_D5_S3_L001_R1_001.fastq.gz &> PBS_E9_D_F_A3_D5.log
 
+kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o BRA_E9_C_F_A35_C1 -t 8 BRA_E9_C_F_A35_C1_S9_R1_001.fastq.gz BRA_E9_C_F_A35_C1_S9_R2_001.fastq.gz &> BRA_E9_C_F_A35_C1.log
+
+kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o BRA_E11_C_F_A34_C4 -t 8 BRA_E11_C_F_A34_C4_S1_R1_001.fastq.gz BRA_E11_C_F_A34_C4_S1_R2_001.fastq.gz &> BRA_E11_C_F_A34_C4.log
+kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o BRA_E11_C_M_A34_C1 -t 8 BRA_E11_C_M_A34_C1_S2_R1_001.fastq.gz BRA_E11_C_M_A34_C1_S2_R2_001.fastq.gz &> BRA_E11_C_M_A34_C1.log
+kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o BRA_E11_C_M_A34_C2 -t 8 BRA_E11_C_M_A34_C2_S3_R1_001.fastq.gz BRA_E11_C_M_A34_C2_S3_R2_001.fastq.gz &> BRA_E11_C_M_A34_C2.log
+kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o BRA_E11_C_M_A34_C3 -t 8 BRA_E11_C_M_A34_C3_S4_R1_001.fastq.gz BRA_E11_C_M_A34_C3_S4_R2_001.fastq.gz &> BRA_E11_C_M_A34_C3.log
+kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o BRA_E11_D_F_A34_D4 -t 8 BRA_E11_D_F_A34_D4_S5_R1_001.fastq.gz BRA_E11_D_F_A34_D4_S5_R2_001.fastq.gz &> BRA_E11_D_F_A34_D4.log
+kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o BRA_E11_D_M_A34_D1 -t 8 BRA_E11_D_M_A34_D1_S6_R1_001.fastq.gz BRA_E11_D_M_A34_D1_S6_R2_001.fastq.gz &> BRA_E11_D_M_A34_D1.log
+kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o BRA_E11_D_M_A34_D2 -t 8 BRA_E11_D_M_A34_D2_S7_R1_001.fastq.gz BRA_E11_D_M_A34_D2_S7_R2_001.fastq.gz &> BRA_E11_D_M_A34_D2.log
+kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o BRA_E11_D_M_A34_D3 -t 8 BRA_E11_D_M_A34_D3_S8_R1_001.fastq.gz BRA_E11_D_M_A34_D3_S8_R2_001.fastq.gz &> BRA_E11_D_M_A34_D3.log
+
+kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o BRA_E9_D_M_A35_D7 -t 8 BRA_E9_D_M_A35_D7_S26_R1_001.fastq.gz BRA_E9_D_M_A35_D7_S26_R2_001.fastq.gz &> BRA_E9_D_M_A35_D7.log
+kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o BRA_E9_D_M_A36_D1 -t 8 BRA_E9_D_M_A36_D1_S27_R1_001.fastq.gz BRA_E9_D_M_A36_D1_S27_R2_001.fastq.gz &> BRA_E9_D_M_A36_D1.log
+kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o BRA_E9_C_F_A36_C8 -t 8 BRA_E9_C_F_A36_C8_S10_R1_001.fastq.gz BRA_E9_C_F_A36_C8_S10_R2_001.fastq.gz &> BRA_E9_C_F_A36_C8.log
+kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o BRA_E9_D_M_A36_D3 -t 8 BRA_E9_D_M_A36_D3_S28_R1_001.fastq.gz BRA_E9_D_M_A36_D3_S28_R2_001.fastq.gz &> BRA_E9_D_M_A36_D3.log
+kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o BRA_E9_C_F_A37_C2 -t 8 BRA_E9_C_F_A37_C2_S11_R1_001.fastq.gz BRA_E9_C_F_A37_C2_S11_R2_001.fastq.gz &> BRA_E9_C_F_A37_C2.log
+kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o BRA_E9_D_M_A36_D4 -t 8 BRA_E9_D_M_A36_D4_S29_R1_001.fastq.gz BRA_E9_D_M_A36_D4_S29_R2_001.fastq.gz &> BRA_E9_D_M_A36_D4.log
+kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o BRA_E9_C_F_A37_C5 -t 8 BRA_E9_C_F_A37_C5_S12_R1_001.fastq.gz BRA_E9_C_F_A37_C5_S12_R2_001.fastq.gz &> BRA_E9_C_F_A37_C5.log
+kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o BRA_E9_D_M_A37_D3 -t 8 BRA_E9_D_M_A37_D3_S30_R1_001.fastq.gz BRA_E9_D_M_A37_D3_S30_R2_001.fastq.gz &> BRA_E9_D_M_A37_D3.log
+kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o BRA_E9_C_M_A35_C5 -t 8 BRA_E9_C_M_A35_C5_S13_R1_001.fastq.gz BRA_E9_C_M_A35_C5_S13_R2_001.fastq.gz &> BRA_E9_C_M_A35_C5.log
+kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o BRA_E9_D_M_A37_D4 -t 8 BRA_E9_D_M_A37_D4_S31_R1_001.fastq.gz BRA_E9_D_M_A37_D4_S31_R2_001.fastq.gz &> BRA_E9_D_M_A37_D4.log
+kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o BRA_E9_C_M_A35_C6 -t 8 BRA_E9_C_M_A35_C6_S14_R1_001.fastq.gz BRA_E9_C_M_A35_C6_S14_R2_001.fastq.gz &> BRA_E9_C_M_A35_C6.log
+kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o MEX_E9_C_M_A38_C6 -t 8 MEX_E9_C_M_A38_C6_S32_R1_001.fastq.gz MEX_E9_C_M_A38_C6_S32_R2_001.fastq.gz &> MEX_E9_C_M_A38_C6.log
+kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o BRA_E9_C_M_A35_C7 -t 8 BRA_E9_C_M_A35_C7_S15_R1_001.fastq.gz BRA_E9_C_M_A35_C7_S15_R2_001.fastq.gz &> BRA_E9_C_M_A35_C7.log
+kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o MEX_E9_D_F_A38_D2 -t 8 MEX_E9_D_F_A38_D2_S33_R1_001.fastq.gz MEX_E9_D_F_A38_D2_S33_R2_001.fastq.gz &> MEX_E9_D_F_A38_D2.log
+kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o BRA_E9_C_M_A36_C1 -t 8 BRA_E9_C_M_A36_C1_S16_R1_001.fastq.gz BRA_E9_C_M_A36_C1_S16_R2_001.fastq.gz &> BRA_E9_C_M_A36_C1.log
+kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o MEX_E9_D_F_A38_D3 -t 8 MEX_E9_D_F_A38_D3_S34_R1_001.fastq.gz MEX_E9_D_F_A38_D3_S34_R2_001.fastq.gz &> MEX_E9_D_F_A38_D3.log
+kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o BRA_E9_C_M_A36_C3 -t 8 BRA_E9_C_M_A36_C3_S17_R1_001.fastq.gz BRA_E9_C_M_A36_C3_S17_R2_001.fastq.gz &> BRA_E9_C_M_A36_C3.log
+kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o MEX_E9_D_M_A38_D1 -t 8 MEX_E9_D_M_A38_D1_S35_R1_001.fastq.gz MEX_E9_D_M_A38_D1_S35_R2_001.fastq.gz &> MEX_E9_D_M_A38_D1.log
+kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o BRA_E9_C_M_A36_C4 -t 8 BRA_E9_C_M_A36_C4_S18_R1_001.fastq.gz BRA_E9_C_M_A36_C4_S18_R2_001.fastq.gz &> BRA_E9_C_M_A36_C4.log
+kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o MEX_E9_D_M_A38_D6 -t 8 MEX_E9_D_M_A38_D6_S36_R1_001.fastq.gz MEX_E9_D_M_A38_D6_S36_R2_001.fastq.gz &> MEX_E9_D_M_A38_D6.log
+kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o BRA_E9_D_F_A35_D1 -t 8 BRA_E9_D_F_A35_D1_S20_R1_001.fastq.gz BRA_E9_D_F_A35_D1_S20_R2_001.fastq.gz &> BRA_E9_D_F_A35_D1.log
+kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o BRA_E9_D_M_A35_D6 -t 8 BRA_E9_D_M_A35_D6_S25_R1_001.fastq.gz BRA_E9_D_M_A35_D6_S25_R2_001.fastq.gz &> BRA_E9_D_M_A35_D6.log
+kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o BRA_E9_D_M_A35_D5 -t 8 BRA_E9_D_M_A35_D5_S24_R1_001.fastq.gz BRA_E9_D_M_A35_D5_S24_R2_001.fastq.gz &> BRA_E9_D_M_A35_D5.log
+kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o BRA_E9_D_F_A37_D5 -t 8 BRA_E9_D_F_A37_D5_S23_R1_001.fastq.gz BRA_E9_D_F_A37_D5_S23_R2_001.fastq.gz &> BRA_E9_D_F_A37_D5.log
+kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o BRA_E9_D_F_A37_D2 -t 8 BRA_E9_D_F_A37_D2_S22_R1_001.fastq.gz BRA_E9_D_F_A37_D2_S22_R2_001.fastq.gz &> BRA_E9_D_F_A37_D2.log
+kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o BRA_E9_D_F_A36_D8 -t 8 BRA_E9_D_F_A36_D8_S21_R1_001.fastq.gz BRA_E9_D_F_A36_D8_S21_R2_001.fastq.gz &> BRA_E9_D_F_A36_D8.log
+kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o BRA_E9_C_M_A37_C3 -t 8 BRA_E9_C_M_A37_C3_S19_R1_001.fastq.gz BRA_E9_C_M_A37_C3_S19_R2_001.fastq.gz &> BRA_E9_C_M_A37_C3.log
+
+kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o MX5-E11-C-F-A50-C3 -t 8 MX5-E11-C-F-A50-C3_S61_R1_001.fastq.gz MX5-E11-C-F-A50-C3_S61_R2_001.fastq.gz &> MX5-E11-C-F-A50-C3.log
+kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o MX5-E11-C-F-A53-C6 -t 8 MX5-E11-C-F-A53-C6_S62_R1_001.fastq.gz MX5-E11-C-F-A53-C6_S62_R2_001.fastq.gz &> MX5-E11-C-F-A53-C6.log
+kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o MX5-E11-C-F-A60-C4 -t 8 MX5-E11-C-F-A60-C4_S63_R1_001.fastq.gz MX5-E11-C-F-A60-C4_S63_R2_001.fastq.gz &> MX5-E11-C-F-A60-C4.log
+kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o MX5-E11-C-F-A60-C5 -t 8 MX5-E11-C-F-A60-C5_S64_R1_001.fastq.gz MX5-E11-C-F-A60-C5_S64_R2_001.fastq.gz &> MX5-E11-C-F-A60-C5.log
+kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o MX5-E11-C-F-A61-C3 -t 8 MX5-E11-C-F-A61-C3_S65_R1_001.fastq.gz MX5-E11-C-F-A61-C3_S65_R2_001.fastq.gz &> MX5-E11-C-F-A61-C3.log
+kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o MX5-E11-C-F-A62-C3 -t 8 MX5-E11-C-F-A62-C3_S66_R1_001.fastq.gz MX5-E11-C-F-A62-C3_S66_R2_001.fastq.gz &> MX5-E11-C-F-A62-C3.log
+kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o MX5-E11-C-F-A62-C4 -t 8 MX5-E11-C-F-A62-C4_S67_R1_001.fastq.gz MX5-E11-C-F-A62-C4_S67_R2_001.fastq.gz &> MX5-E11-C-F-A62-C4.log
+kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o MX5-E11-C-M-A53-C5 -t 8 MX5-E11-C-M-A53-C5_S68_R1_001.fastq.gz MX5-E11-C-M-A53-C5_S68_R2_001.fastq.gz &> MX5-E11-C-M-A53-C5.log
+kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o MX5-E11-C-M-A53-C7 -t 8 MX5-E11-C-M-A53-C7_S69_R1_001.fastq.gz MX5-E11-C-M-A53-C7_S69_R2_001.fastq.gz &> MX5-E11-C-M-A53-C7.log
+kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o MX5-E11-C-M-A60-C3 -t 8 MX5-E11-C-M-A60-C3_S70_R1_001.fastq.gz MX5-E11-C-M-A60-C3_S70_R2_001.fastq.gz &> MX5-E11-C-M-A60-C3.log
+kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o MX5-E11-C-M-A61-C4 -t 8 MX5-E11-C-M-A61-C4_S71_R1_001.fastq.gz MX5-E11-C-M-A61-C4_S71_R2_001.fastq.gz &> MX5-E11-C-M-A61-C4.log
+kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o MX5-E11-C-M-A61-C5 -t 8 MX5-E11-C-M-A61-C5_S72_R1_001.fastq.gz MX5-E11-C-M-A61-C5_S72_R2_001.fastq.gz &> MX5-E11-C-M-A61-C5.log
+kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o MX5-E11-C-M-A62-C5 -t 8 MX5-E11-C-M-A62-C5_S73_R1_001.fastq.gz MX5-E11-C-M-A62-C5_S73_R2_001.fastq.gz &> MX5-E11-C-M-A62-C5.log
+kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o MX5-E11-D-F-A50-D3 -t 8 MX5-E11-D-F-A50-D3_S74_R1_001.fastq.gz MX5-E11-D-F-A50-D3_S74_R2_001.fastq.gz &> MX5-E11-D-F-A50-D3.log
+kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o MX5-E11-D-M-A53-D7 -t 8 MX5-E11-D-M-A53-D7_S75_R1_001.fastq.gz MX5-E11-D-M-A53-D7_S75_R2_001.fastq.gz &> MX5-E11-D-M-A53-D7.log
+kallisto quant -i Mus_musculus.GRCm39.cdna.all.index -o MX5-E11-D-M-A60-D3 -t 8 MX5-E11-D-M-A60-D3_S76_R1_001.fastq.gz MX5-E11-D-M-A60-D3_S76_R2_001.fastq.gz &> MX5-E11-D-M-A60-D3.log
+
 # summarize fastqc and kallisto mapping results in a single summary html using MultiQC
 multiqc -d . 
 
 echo "Finished"
+
