@@ -1,5 +1,5 @@
 # ZIKVplacentaRNAseq
-This repository contains all of the R and Bash scripts used to generate the figures in Bohm et. al. 2025 (Preprint DOI: 10.1101/2025.02.12.637947). Many of the code chunks were adapted from Berry et al 2021 (DOI: 10.1128/mBio.01214-21).
+This repository contains all of the R and Bash scripts used to generate the figures in Bohm et al. 2025 (Preprint DOI: 10.1101/2025.02.12.637947). Many of the code chunks were adapted from Berry et al. 2021 (DOI: 10.1128/mBio.01214-21).
 
 Step 0: RNAseq fastq files were first mapped to the Mus musculus genome using Kallisto.
 
