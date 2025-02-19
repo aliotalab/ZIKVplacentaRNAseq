@@ -1,0 +1,60 @@
+## Step 5: Volcano plots (from DIY Transcriptomics)----
+
+#Vplot of genes differentially expressed between BRA and PBS
+myTopHitsBRA.df$diffexpressed <- "NO"
+myTopHitsBRA.df$diffexpressed[myTopHitsBRA.df$logFC > 1 & myTopHitsBRA.df$adj.P.Val < 0.05] <- "UP" #upregulated genes
+myTopHitsBRA.df$diffexpressed[myTopHitsBRA.df$logFC < -1 & myTopHitsBRA.df$adj.P.Val < 0.05] <- "DOWN" #downregulated genes
+myTopHitsBRA.df$delabel <- NA #write NA to all values in delabel
+myTopHitsBRA.df$delabel[myTopHitsBRA.df$diffexpressed != "NO"] <- myTopHitsBRA.df$geneID[myTopHitsBRA.df$diffexpressed != "NO"] #geneID labels for all UP/DOWN
+
+vplotBRA <- ggplot(data=myTopHitsBRA.df, aes(x=logFC, y=-log10(adj.P.Val), col=diffexpressed, label=delabel, group=diffexpressed)) +
+        theme_minimal() +
+        theme(panel.background = element_rect(fill = "white", colour = "grey50")) +
+        geom_vline(xintercept=c(-1, 1), col="darkgray") +
+        geom_hline(yintercept=-log10(0.05), col="darkgray") +
+        scale_color_manual(values=c("black", "lightgray", "royalblue1")) +
+        geom_point(shape=19) +      
+        geom_text_repel() +  
+        xlim(-6, 6) +
+        theme(legend.position="none") +
+        labs(title="Volcano plot: BRA Chorion E9.5")
+
+#Vplot of genes differentially expressed between MEX and PBS
+myTopHitsMEX.df$diffexpressed <- "NO" 
+myTopHitsMEX.df$diffexpressed[myTopHitsMEX.df$logFC > 1 & myTopHitsMEX.df$adj.P.Val < 0.05] <- "UP" #upregulated genes
+myTopHitsMEX.df$diffexpressed[myTopHitsMEX.df$logFC < -1 & myTopHitsMEX.df$adj.P.Val < 0.05] <- "DOWN"
+myTopHitsMEX.df$delabel <- NA #write NA to all values in delabel
+myTopHitsMEX.df$delabel[myTopHitsMEX.df$diffexpressed != "NO"] <- myTopHitsMEX.df$geneID[myTopHitsMEX.df$diffexpressed != "NO"] #geneID labels for all UP/DOWN/GOI
+
+vplotMEX <- ggplot(data=myTopHitsMEX.df, aes(x=logFC, y=-log10(adj.P.Val), col=diffexpressed, label=delabel, group=diffexpressed)) +
+        theme_minimal() +
+        theme(panel.background = element_rect(fill = "white", colour = "grey50")) +
+        geom_vline(xintercept=c(-1, 1), col="darkgray") +
+        geom_hline(yintercept=-log10(0.05), col="darkgray") +
+        scale_color_manual(values=c("black", "lightgray", "darkorange1")) +
+        geom_point(shape=19) +      
+        geom_text_repel() +  
+        xlim(-6, 6) +
+        theme(legend.position="none") +
+        labs(title="Volcano plot: MEX Chorion E9.5")
+
+#Vplot of genes differentially expressed between BRA and MEX
+myTopHitsBRAvsMEX.df$diffexpressed <- "NO" #write "NO" to diffexpressed for all genes
+myTopHitsBRAvsMEX.df$diffexpressed[myTopHitsBRAvsMEX.df$logFC > 1 & myTopHitsBRAvsMEX.df$adj.P.Val < 0.05] <- "UP" #upregulated genes
+myTopHitsBRAvsMEX.df$diffexpressed[myTopHitsBRAvsMEX.df$logFC < -1 & myTopHitsBRAvsMEX.df$adj.P.Val < 0.05] <- "DOWN"
+myTopHitsBRAvsMEX.df$delabel <- NA #write NA to all values in delabel
+myTopHitsBRAvsMEX.df$delabel[myTopHitsBRAvsMEX.df$diffexpressed != "NO"] <- myTopHitsBRAvsMEX.df$geneID[myTopHitsBRAvsMEX.df$diffexpressed != "NO"] #geneID labels for all UP/DOWN/GOI
+
+vplotZIKV <- ggplot(data=myTopHitsBRAvsMEX.df, aes(x=logFC, y=-log10(adj.P.Val), col=diffexpressed, label=delabel, group=diffexpressed)) +
+        theme_minimal() +
+        theme(panel.background = element_rect(fill = "white", colour = "grey50")) +
+        geom_vline(xintercept=c(-1, 1), col="darkgray") +
+        geom_hline(yintercept=-log10(0.05), col="darkgray") +
+        scale_color_manual(values=c("darkorange1", "lightgray", "royalblue1")) +
+        geom_point(shape=19) +      
+        geom_text_repel() +  
+        xlim(-3, 3) +
+        theme(legend.position="none") +
+        labs(title="Volcano plot: BRA vs MEX Chorion E9.5")
+
+
