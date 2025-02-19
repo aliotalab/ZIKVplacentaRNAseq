@@ -1,0 +1,102 @@
+## Step 6: Gene set enrichment plots (from DIY Transcriptomics)----
+c2cp <- read.gmt("m2.cp.v2022.1.Mm.symbols.gmt")
+hs_gsea <- msigdbr(species = "Mus musculus") #gets all collections/signatures with human gene IDs
+#take a look at the categories and subcategories of signatures available to you
+hs_gsea_c2 <- msigdbr(species = "Mus musculus", # change depending on species your data came from
+                      category = "H") %>% # choose your msigdb collection of interest, H = Hallmark
+  dplyr::select(gs_name, gene_symbol) #just get the columns corresponding to signature name and gene symbols of genes in each signature 
+
+# Now that you have your msigdb collections ready, prepare your data
+# grab the dataframe you made in step3 script
+# Pull out just the columns corresponding to gene symbols and LogFC for pairwise comparisons for the enrichment analysis
+
+mydata.df <- mutate(log2.cpm.filtered.norm.df,
+                    PBS.C9.AVG = (PBS_E9_C_F_A29_C1 +	PBS_E9_C_M_A29_C3 +	PBS_E9_C_M_A29_C4 +	PBS_E9_C_F_A29_C6 +	PBS_E9_C_M_A3_C2 + PBS_E9_C_M_A3_C3 +	PBS_E9_C_F_A3_C5 +	PBS_E9_C_F_A3_C6 + PBS_E9_C_M_A9_C1 + PBS_E9_C_F_A9_C2 +	PBS_E9_C_F_A9_C3 +	PBS_E9_C_M_A9_C4 + PBS_E9_C_M_A25_C1 +	PBS_E9_C_F_A25_C2 +	PBS_E9_C_F_A25_C3 +	PBS_E9_C_M_A25_C4 +	PBS_E9_C_M_A10_C1 +	PBS_E9_C_M_A10_C4 +	PBS_E9_C_F_A10_C7 +	PBS_E9_C_F_A10_C9)/20,
+                    MEX.C9.AVG = (MEX_E9_C_F_A15_C1 +	MEX_E9_C_M_A15_C2 +	MEX_E9_C_M_A15_C3 +	MEX_E9_C_F_A15_C6 +	MEX_E9_C_M_A26_C1 +	MEX_E9_C_M_A26_C2 +	MEX_E9_C_F_A26_C3 +	MEX_E9_C_F_A26_C4 + MEX_E9_C_F_A28_C1 +	MEX_E9_C_F_A28_C2 +	MEX_E9_C_M_A28_C4 +	MEX_E9_C_M_A28_C5 +	MEX_E9_C_M_A14_C1 +	MEX_E9_C_F_A14_C2 +	MEX_E9_C_M_A14_C3 +	MEX_E9_C_F_A14_C4 +	MEX_E9_C_M_A38_C6)/17,
+                    BRA.C9.AVG = (BRA_E9_C_M_A24_C1 +	BRA_E9_C_F_A24_C2 +	BRA_E9_C_F_A24_C3 +	BRA_E9_C_M_A24_C4 +	BRA_E9_C_F_A13_C1 +	BRA_E9_C_F_A13_C3 +	BRA_E9_C_M_A13_C4 +	BRA_E9_C_M_A13_C7 +	BRA_E9_C_M_A36_C1 +	BRA_E9_C_F_A35_C1 +	BRA_E9_C_M_A35_C5 +	BRA_E9_C_M_A35_C6 +	BRA_E9_C_M_A35_C7 +	BRA_E9_C_F_A37_C2 +	BRA_E9_C_M_A37_C3 +	BRA_E9_C_F_A37_C5 +	BRA_E9_C_M_A36_C3 +	BRA_E9_C_M_A36_C4 +	BRA_E9_C_F_A36_C8)/19,
+                    MEXlogFC = (MEX.C9.AVG - PBS.C9.AVG),
+                    BRAlogFC = (BRA.C9.AVG - PBS.C9.AVG),
+                    ZIKVlogFC = BRA.C9.AVG - MEX.C9.AVG) %>%
+  mutate_if(is.numeric, round, 2)
+mydata.df.sub <- dplyr::select(mydata.df, geneID, MEXlogFC, BRAlogFC, ZIKVlogFC)
+
+# GSEA for MEX vs PBS
+mydata.gsea.MEX <- mydata.df.sub$MEXlogFC
+names(mydata.gsea.MEX) <- as.character(mydata.df.sub$geneID)
+mydata.gsea.MEX <- sort(mydata.gsea.MEX, decreasing = TRUE)
+myGSEA.res.MEX <- GSEA(mydata.gsea.MEX, TERM2GENE=hs_gsea_c2, verbose=FALSE)
+myGSEA.df.MEX <- as_tibble(myGSEA.res.MEX@result)
+datatable(myGSEA.df.MEX, 
+          extensions = c('KeyTable', "FixedHeader"), 
+          caption = 'Signatures enriched in E9.5 MEX Chorions',
+          options = list(keys = TRUE, searchHighlight = TRUE, pageLength = 10, lengthMenu = c("10", "25", "50", "100"))) %>%
+  formatRound(columns=c(2:10), digits=2)
+
+myGSEA.df.MEX <- myGSEA.df.MEX %>%
+  mutate(phenotype = case_when(
+    NES > 0 ~ "MEX",
+    NES < 0 ~ "PBS"))
+
+gseaMEX <- ggplot(myGSEA.df.MEX[1:6,], aes(x=phenotype, y=ID)) + 
+  theme_bw() +
+  theme(axis.text.y.left = element_text(size = 4)) +
+  theme(legend.text = element_text(size=4)) +
+  theme(legend.title=element_text(size=4)) +
+  theme(legend.key.size = unit(0.5, 'cm')) +
+  geom_point(aes(size=setSize, color = NES, alpha=-log10(p.adjust))) +
+  scale_color_gradient2(low = "black", mid = "white", high = "darkorange1",
+  midpoint = 0,)
+
+# GSEA for BRA vs PBS
+mydata.gsea.BRA <- mydata.df.sub$BRAlogFC
+names(mydata.gsea.BRA) <- as.character(mydata.df.sub$geneID)
+mydata.gsea.BRA <- sort(mydata.gsea.BRA, decreasing = TRUE)
+myGSEA.res.BRA <- GSEA(mydata.gsea.BRA, TERM2GENE=hs_gsea_c2, verbose=FALSE)
+myGSEA.df.BRA <- as_tibble(myGSEA.res.BRA@result)
+datatable(myGSEA.df.BRA, 
+          extensions = c('KeyTable', "FixedHeader"), 
+          caption = 'Signatures enriched in E9.5 BRA Chorions',
+          options = list(keys = TRUE, searchHighlight = TRUE, pageLength = 10, lengthMenu = c("10", "25", "50", "100"))) %>%
+  formatRound(columns=c(2:10), digits=2)
+
+myGSEA.df.BRA <- myGSEA.df.BRA %>%
+  mutate(phenotype = case_when(
+    NES > 0 ~ "BRA",
+    NES < 0 ~ "PBS"))
+
+gseaBRA <- ggplot(myGSEA.df.BRA[1:7,], aes(x=phenotype, y=ID)) + 
+  theme_bw() +
+  theme(axis.text.y.left = element_text(size = 4)) +
+  theme(legend.text = element_text(size=4)) +
+  theme(legend.title=element_text(size=4)) +
+  theme(legend.key.size = unit(0.5, 'cm')) +
+  geom_point(aes(size=setSize, color = NES, alpha=-log10(p.adjust))) +
+  scale_color_gradient2(low = "black", mid = "white", high = "royalblue1",
+  midpoint = 0,)
+
+# GSEA for BRA vs MEX
+mydata.gsea.ZIKV <- mydata.df.sub$ZIKVlogFC
+names(mydata.gsea.ZIKV) <- as.character(mydata.df.sub$geneID)
+mydata.gsea.ZIKV <- sort(mydata.gsea.ZIKV, decreasing = TRUE)
+myGSEA.res.ZIKV <- GSEA(mydata.gsea.ZIKV, TERM2GENE=hs_gsea_c2, verbose=FALSE)
+myGSEA.df.ZIKV <- as_tibble(myGSEA.res.ZIKV@result)
+datatable(myGSEA.df.ZIKV, 
+          extensions = c('KeyTable', "FixedHeader"), 
+          caption = 'Signatures enriched in E9.5 BRA vs MEX Chorions',
+          options = list(keys = TRUE, searchHighlight = TRUE, pageLength = 10, lengthMenu = c("10", "25", "50", "100"))) %>%
+  formatRound(columns=c(2:10), digits=2)
+
+myGSEA.df.ZIKV <- myGSEA.df.ZIKV %>%
+  mutate(phenotype = case_when(
+    NES > 0 ~ "BRA",
+    NES < 0 ~ "MEX"))
+
+gseaBRAvsMEX <- ggplot(myGSEA.df.ZIKV[1:10,], aes(x=phenotype, y=ID)) + 
+  theme_bw() +
+  theme(axis.text.y.left = element_text(size = 4)) +
+  theme(legend.text = element_text(size=4)) +
+  theme(legend.title=element_text(size=4)) +
+  theme(legend.key.size = unit(0.5, 'cm')) +
+  geom_point(aes(size=setSize, color = NES, alpha=-log10(p.adjust))) +
+  scale_color_gradient2(low = "darkorange1", mid = "white", high = "royalblue1",
+  midpoint = 0,)
