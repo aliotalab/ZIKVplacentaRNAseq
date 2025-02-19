@@ -1,0 +1,28 @@
+## Step 3: Design contrast matrix (from DIY Transcriptomics)----
+group <- factor(targets$group) #covariates of interest
+design <- model.matrix(~0 + group) #this assigns specific pairwise comparisons
+colnames(design) <- levels(group)
+v.DEGList.filtered.norm <- voom(myDGEList.filtered.norm, design, plot = TRUE) #variance-stabilize the data
+fit <- lmFit(v.DEGList.filtered.norm, design) # fit a linear model to your data
+
+#these are your pairwise comparisons
+contrast.matrix <- makeContrasts(BRA.E9.chorion.dge = BRA_E9_C - PBS_E9_C,
+                                 MEX.E9.chorion.dge = MEX_E9_C - PBS_E9_C,
+                                 ZIKVBRA.E9.chorion.dge = BRA_E9_C - MEX_E9_C,
+                                 levels=design)
+fits <- contrasts.fit(fit, contrast.matrix)
+ebFit <- eBayes(fits)
+results <- decideTests(ebFit, method="global", adjust.method="BH", p.value=0.05, lfc=1)
+colnames(v.DEGList.filtered.norm$E) <- sampleLabels
+diffGenes <- v.DEGList.filtered.norm$E[results[,1] !=0 | results[,2] !=0 | results[,3] !=0,] #include column numbers of each pairwise comparison you want to assess
+#!=0 selects genes that are differentially expressed (up or downregulated)
+diffGenes.df <- as_tibble(diffGenes, rownames = "geneID")
+summary(results)
+
+#display differentially expressed genes between individual samples in an interactive table
+datatable(diffGenes.df, 
+          extensions = c('KeyTable', "FixedHeader"), 
+          caption = 'Table 1: DEGs in BRA and MEX chorions at E9.5',
+          options = list(keys = TRUE, searchHighlight = TRUE, pageLength = 10, lengthMenu = c("10", "25", "50", "100"))) %>%
+  formatRound(columns=c(2:11), digits=2)
+
