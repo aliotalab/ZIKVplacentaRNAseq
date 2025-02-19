@@ -1,0 +1,572 @@
+## Figure 11: RIG012 interaction plots----
+library(rmarkdown)
+library(tinytex)
+library(knitr)
+library(tidyverse)
+library(ggbeeswarm)
+library(emmeans)
+library(multcomp)
+library(car)
+library(broom)
+library(ggpubr)
+library(epitools)
+library(cowplot)
+library(ggpubr)
+library(broom)
+library(grid)
+
+p <- read_tsv("E14placentastudydesign.txt") #read in placenta data
+f <- read_tsv("E14fetusstudydesign.txt") #read in fetus data
+f$Rsad2 <- as.numeric(f$Rsad2) #ensure qRT-PCR data is read as numeric
+f$IFNb <- as.numeric(f$IFNb)
+f$Mx1 <- as.numeric(f$Mx1)
+
+## Figure 11a: vRNA----
+# Two-way ANOVA with interaction effect
+placenta_vl_anova_model <- aov(viralload ~ treatment * status, data = p)
+placenta_vl_anova_summary <- summary(placenta_vl_anova_model)
+
+# Extract p-values for each term
+placenta_vl_treatment_pvalue <- placenta_vl_anova_summary[[1]]["treatment       ", "Pr(>F)"]
+placenta_vl_status_pvalue <- placenta_vl_anova_summary[[1]]["status          ", "Pr(>F)"]
+placenta_vl_interaction_pvalue <- placenta_vl_anova_summary[[1]]["treatment:status", "Pr(>F)"]
+
+# Perform Tukey's HSD test for pairwise comparisons
+placenta_vl_tukey <- TukeyHSD(placenta_vl_anova_model)
+
+placenta_vl_treatment_results <- placenta_vl_tukey$treatment
+placenta_vl_status_results <- placenta_vl_tukey$status
+placenta_vl_interaction_results <- placenta_vl_tukey$`treatment:status`
+
+# Round the p-values to n decimal places
+placenta_vl_treatment_pvalue <- round(placenta_vl_treatment_pvalue, 3)
+placenta_vl_status_pvalue <- round(placenta_vl_status_pvalue, 3)
+placenta_vl_interaction_pvalue <- round(placenta_vl_interaction_pvalue, 3)
+placenta_vl_status_results <- round(placenta_vl_status_results, 3)
+
+# Assuming you already have your data frame 'p' and p-values
+placenta_interaction_vl <- ggplot(p, aes(x = status, y = viralload, color = treatment, group = treatment)) +
+  geom_point(position = position_jitter(width = 0.15, height = 0)) +  
+  geom_line(stat = "summary", fun = "mean", aes(group = treatment), linewidth = 1.2) +  
+  geom_errorbar(stat = "summary", fun.data = "mean_se", width = 0.2) +  
+  labs(y = "Log10 ZIKV copies/tissue", x = NULL) +  
+  scale_y_continuous(
+    limits = c(3, 10),  
+    breaks = c(4, 6, 8, 10),
+    expand = c(0, 0),
+  ) +
+  scale_color_manual(values = c("blue3", "magenta"), guide = "none") +
+  theme_classic() +
+  # Add p-values to a text box
+  annotation_custom(
+    grob = textGrob(
+      paste(
+        "Treatment ",
+        "\nOutcome ",
+        "\nInteraction "),
+      x = unit(0.1, "npc"), y = unit(0.95, "npc"), just = c("left", "top"), 
+      gp = gpar(fontsize = 7, col = "black"))) +
+  annotation_custom(
+    grob = textGrob(
+      paste(
+        "", ifelse(placenta_vl_treatment_pvalue < 0.0001, "****", 
+               ifelse(placenta_vl_treatment_pvalue < 0.001, "***", 
+                      ifelse(placenta_vl_treatment_pvalue < 0.01, "**", 
+                             ifelse(placenta_vl_treatment_pvalue < 0.05, "*", "ns")))),
+        "\n",ifelse(placenta_vl_status_pvalue < 0.0001, "****", 
+               ifelse(placenta_vl_status_pvalue < 0.001, "***", 
+                      ifelse(placenta_vl_status_pvalue < 0.01, "**", 
+                             ifelse(placenta_vl_status_pvalue < 0.05, "*", "ns")))),
+        "\n",ifelse(placenta_vl_interaction_pvalue < 0.0001, "****", 
+               ifelse(placenta_vl_interaction_pvalue < 0.001, "***", 
+                      ifelse(placenta_vl_interaction_pvalue < 0.01, "**", 
+                             ifelse(placenta_vl_interaction_pvalue < 0.05, "*", "ns"))))),
+      x = unit(0.3, "npc"), y = unit(0.95, "npc"), just = c("left", "top"), 
+      gp = gpar(fontsize = 7, col = "black", fontface = "bold"))) +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 20, face = "bold", color = "blue"),
+    axis.text.x = element_text(size = 11, face = "bold", color = "black"),  
+    axis.text.y = element_text(size = 11, face = "bold", color = "black"),   
+    axis.title.y = element_text(size = 12, face = "bold", color = "black"),
+    legend.position = "none"  # Removed redundant legend position setting
+  )
+
+# Two-way ANOVA with interaction effect
+fetus_vl_anova_model <- aov(viralload ~ treatment * status, data = f)
+fetus_vl_anova_summary <- summary(fetus_vl_anova_model)
+
+# Extract p-values for each term
+fetus_vl_treatment_pvalue <- fetus_vl_anova_summary[[1]]["treatment       ", "Pr(>F)"]
+fetus_vl_status_pvalue <- fetus_vl_anova_summary[[1]]["status          ", "Pr(>F)"]
+fetus_vl_interaction_pvalue <- fetus_vl_anova_summary[[1]]["treatment:status", "Pr(>F)"]
+
+# Perform Tukey's HSD test for pairwise comparisons
+fetus_vl_tukey <- TukeyHSD(fetus_vl_anova_model)
+
+vl_treatment_results <- fetus_vl_tukey$treatment
+vl_status_results <- fetus_vl_tukey$status
+vl_interaction_results <- fetus_vl_tukey$`treatment:status`
+
+# Round the p-values to n decimal places
+fetus_vl_treatment_pvalue <- round(fetus_vl_treatment_pvalue, 3)
+fetus_vl_status_pvalue <- round(fetus_vl_status_pvalue, 3)
+fetus_vl_interaction_pvalue <- round(fetus_vl_interaction_pvalue, 3)
+vl_status_results <- round(vl_status_results, 3)
+
+# Create interaction plot and add p-value annotation
+fetus_interaction_viralload <- ggplot(f, aes(x = status, y = viralload, color = treatment, group = treatment)) +
+  geom_point(position = position_jitter(width = 0.15, height = 0), shape = 21, fill = "white", stroke = 0.75) +  # Add jittered points
+  geom_line(stat = "summary", fun = "mean", aes(group = treatment), linewidth = 1.2) +  # Add lines for means
+  geom_errorbar(stat = "summary", fun.data = "mean_se", width = 0.2) +  # Add error bars (standard error)
+  labs(y = NULL, x = NULL) +
+  scale_y_continuous(
+    limits = c(3, 10),  # Set the limits for the y-axis (positive values only)
+    expand = c(0, 0),
+    breaks = c(4, 6, 8, 10)  # Specify breakpoints for clarity
+  ) +
+  #ggtitle("Fetus") +
+  scale_color_manual(values = c("blue3", "magenta"), guide = "none") +  # Custom color palette
+  theme_classic() +
+  annotation_custom(
+    grob = textGrob(
+      paste(
+        "Treatment ",
+        "\nOutcome ",
+        "\nInteraction "),
+      x = unit(0.1, "npc"), y = unit(0.95, "npc"), just = c("left", "top"), 
+      gp = gpar(fontsize = 7, col = "black"))) +
+  annotation_custom(
+    grob = textGrob(
+      paste(
+        "", ifelse(fetus_vl_treatment_pvalue < 0.0001, "****", 
+               ifelse(fetus_vl_treatment_pvalue < 0.001, "***", 
+                      ifelse(fetus_vl_treatment_pvalue < 0.01, "**", 
+                             ifelse(fetus_vl_treatment_pvalue < 0.05, "*", "ns")))),
+        "\n",ifelse(fetus_vl_status_pvalue < 0.0001, "****", 
+               ifelse(fetus_vl_status_pvalue < 0.001, "***", 
+                      ifelse(fetus_vl_status_pvalue < 0.01, "**", 
+                             ifelse(fetus_vl_status_pvalue < 0.05, "*", "ns")))),
+        "\n",ifelse(fetus_vl_interaction_pvalue < 0.0001, "****", 
+               ifelse(fetus_vl_interaction_pvalue < 0.001, "***", 
+                      ifelse(fetus_vl_interaction_pvalue < 0.01, "**", 
+                             ifelse(fetus_vl_interaction_pvalue < 0.05, "*", "ns"))))),
+      x = unit(0.3, "npc"), y = unit(0.95, "npc"), just = c("left", "top"), 
+      gp = gpar(fontsize = 7, col = "black", fontface = "bold"))) +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 20, face = "bold", color = "blue"),
+    axis.text.x = element_text(size = 11, face = "bold", color = "black"),  
+    axis.text.y = element_text(size = 11, face = "bold", color = "black"),   
+    axis.title.y = element_text(size = 12, face = "bold", color = "black"),
+    legend.position = "none"  # Removed redundant legend position setting
+  )
+
+## Figure 11b: Ifnb----
+# Two-way ANOVA with interaction effect
+placenta_ifnb_anova_model <- aov(IFNb ~ treatment * status, data = p)
+placenta_ifnb_anova_summary <- summary(placenta_ifnb_anova_model)
+
+# Extract p-values for each term
+placenta_ifnb_treatment_pvalue <- placenta_ifnb_anova_summary[[1]]["treatment       ", "Pr(>F)"]
+placenta_ifnb_status_pvalue <- placenta_ifnb_anova_summary[[1]]["status          ", "Pr(>F)"]
+placenta_ifnb_interaction_pvalue <- placenta_ifnb_anova_summary[[1]]["treatment:status", "Pr(>F)"]
+
+# Perform Tukey's HSD test for pairwise comparisons
+placenta_ifnb_tukey <- TukeyHSD(placenta_ifnb_anova_model)
+placenta_ifnb_status_results <- placenta_ifnb_tukey$status
+
+# Round the p-values to n decimal places
+placenta_ifnb_treatment_pvalue <- round(placenta_ifnb_treatment_pvalue, 3)
+placenta_ifnb_status_pvalue <- round(placenta_ifnb_status_pvalue, 3)
+placenta_ifnb_interaction_pvalue <- round(placenta_ifnb_interaction_pvalue, 3)
+placenta_ifnb_status_results <- round(placenta_ifnb_status_results, 3)
+
+# Create interaction plot and add p-value annotation
+placenta_interaction_IFNb <- ggplot(p, aes(x = status, y = IFNb, color = treatment, group = treatment)) +
+  geom_point(position = position_jitter(width = 0.15, height = 0)) +  # Add jittered points
+  geom_line(stat = "summary", fun = "mean", aes(group = treatment), size = 1.2) +  # Add lines for means
+  geom_errorbar(stat = "summary", fun.data = "mean_se", width = 0.2) +  # Add error bars (standard error)
+  labs(y = "Relative IFNb", x = NULL) +
+  scale_y_log10(
+    limits = c(0.1, 10^5.5),
+    breaks = c(10^-1, 10^0, 10^1, 10^2, 10^3, 10^4, 10^5),
+    expand = c(0, 0),
+    labels = scales::trans_format("log10", scales::math_format(10^.x))) +
+  scale_color_manual(values = c("blue3", "magenta"), guide = "none") +  # Custom color palette
+  theme_classic() +
+  # Add p-values to a text box
+  annotation_custom(
+    grob = textGrob(
+      paste(
+        "Treatment ",
+        "\nOutcome ",
+        "\nInteraction "),
+      x = unit(0.1, "npc"), y = unit(0.95, "npc"), just = c("left", "top"), 
+      gp = gpar(fontsize = 7, col = "black"))) +
+  annotation_custom(
+    grob = textGrob(
+      paste(
+        "", ifelse(placenta_ifnb_treatment_pvalue < 0.0001, "****", 
+               ifelse(placenta_ifnb_treatment_pvalue < 0.001, "***", 
+                      ifelse(placenta_ifnb_treatment_pvalue < 0.01, "**", 
+                             ifelse(placenta_ifnb_treatment_pvalue < 0.05, "*", "ns")))),
+        "\n",ifelse(placenta_ifnb_status_pvalue < 0.0001, "****", 
+               ifelse(placenta_ifnb_status_pvalue < 0.001, "***", 
+                      ifelse(placenta_ifnb_status_pvalue < 0.01, "**", 
+                             ifelse(placenta_ifnb_status_pvalue < 0.05, "*", "ns")))),
+        "\n",ifelse(placenta_ifnb_interaction_pvalue < 0.0001, "****", 
+               ifelse(placenta_ifnb_interaction_pvalue < 0.001, "***", 
+                      ifelse(placenta_ifnb_interaction_pvalue < 0.01, "**", 
+                             ifelse(placenta_ifnb_interaction_pvalue < 0.05, "*", "ns"))))),
+      x = unit(0.3, "npc"), y = unit(0.95, "npc"), just = c("left", "top"), 
+      gp = gpar(fontsize = 7, col = "black", fontface = "bold"))) +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 20, face = "bold", color = "blue"),
+    axis.text.x = element_text(size = 11, face = "bold", color = "black"),  
+    axis.text.y = element_text(size = 11, face = "bold", color = "black"),   
+    axis.title.y = element_text(size = 12, face = "bold", color = "black"),
+    legend.position = "none"  # Removed redundant legend position setting
+  )
+
+# Two-way ANOVA with interaction effect
+fetus_ifnb_anova_model <- aov(IFNb ~ treatment * status, data = f)
+fetus_ifnb_anova_summary <- summary(fetus_ifnb_anova_model)
+
+# Extract p-values for each term
+fetus_ifnb_treatment_pvalue <- fetus_ifnb_anova_summary[[1]]["treatment       ", "Pr(>F)"]
+fetus_ifnb_status_pvalue <- fetus_ifnb_anova_summary[[1]]["status          ", "Pr(>F)"]
+fetus_ifnb_interaction_pvalue <- fetus_ifnb_anova_summary[[1]]["treatment:status", "Pr(>F)"]
+
+# Perform Tukey's HSD test for pairwise comparisons
+fetus_ifnb_tukey <- TukeyHSD(fetus_ifnb_anova_model)
+
+ifnb_treatment_results <- fetus_ifnb_tukey$treatment
+ifnb_status_results <- fetus_ifnb_tukey$status
+ifnb_interaction_results <- fetus_ifnb_tukey$`treatment:status`
+
+# Round the p-values to n decimal places
+fetus_ifnb_treatment_pvalue <- round(fetus_ifnb_treatment_pvalue, 3)
+fetus_ifnb_status_pvalue <- round(fetus_ifnb_status_pvalue, 3)
+fetus_ifnb_interaction_pvalue <- round(fetus_ifnb_interaction_pvalue, 3)
+ifnb_interaction_results <- round(ifnb_interaction_results, 0)
+
+# Create interaction plot and add p-value annotation
+fetus_interaction_IFNb <- ggplot(f, aes(x = status, y = IFNb, color = treatment, group = treatment)) +
+  geom_point(position = position_jitter(width = 0.15, height = 0), shape = 21, fill = "white", stroke = 0.75) +  # Add jittered points
+  geom_line(stat = "summary", fun = "mean", aes(group = treatment), size = 1.2) +  # Add lines for means
+  geom_errorbar(stat = "summary", fun.data = "mean_se", width = 0.2) +  # Add error bars (standard error)
+  labs(y = NULL, x = NULL) +
+  scale_y_log10(
+    limits = c(0.1, 10^5.5),
+    breaks = c(10^-1, 10^0, 10^1, 10^2, 10^3, 10^4, 10^5),
+    expand = c(0, 0),
+    labels = scales::trans_format("log10", scales::math_format(10^.x))) +
+  scale_color_manual(values = c("blue3", "magenta"), guide = "none") +  # Custom color palette
+  theme_classic() +
+  annotation_custom(
+    grob = textGrob(
+      paste(
+        "Treatment ",
+        "\nOutcome ",
+        "\nInteraction "),
+      x = unit(0.1, "npc"), y = unit(0.95, "npc"), just = c("left", "top"), 
+      gp = gpar(fontsize = 7, col = "black"))) +
+  annotation_custom(
+    grob = textGrob(
+      paste(
+        "", ifelse(fetus_ifnb_treatment_pvalue < 0.0001, "****", 
+               ifelse(fetus_ifnb_treatment_pvalue < 0.001, "***", 
+                      ifelse(fetus_ifnb_treatment_pvalue < 0.01, "**", 
+                             ifelse(fetus_ifnb_treatment_pvalue < 0.05, "*", "ns")))),
+        "\n",ifelse(fetus_ifnb_status_pvalue < 0.0001, "****", 
+               ifelse(fetus_ifnb_status_pvalue < 0.001, "***", 
+                      ifelse(fetus_ifnb_status_pvalue < 0.01, "**", 
+                             ifelse(fetus_ifnb_status_pvalue < 0.05, "*", "ns")))),
+        "\n",ifelse(fetus_ifnb_interaction_pvalue < 0.0001, "****", 
+               ifelse(fetus_ifnb_interaction_pvalue < 0.001, "***", 
+                      ifelse(fetus_ifnb_interaction_pvalue < 0.01, "**", 
+                             ifelse(fetus_ifnb_interaction_pvalue < 0.05, "*", "ns"))))),
+      x = unit(0.3, "npc"), y = unit(0.95, "npc"), just = c("left", "top"), 
+      gp = gpar(fontsize = 7, col = "black", fontface = "bold"))) +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 20, face = "bold", color = "blue"),
+    axis.text.x = element_text(size = 11, face = "bold", color = "black"),  
+    axis.text.y = element_text(size = 11, face = "bold", color = "black"),   
+    axis.title.y = element_text(size = 12, face = "bold", color = "black"),
+    legend.position = "none"  # Removed redundant legend position setting
+  )
+
+## Figure 11c: Rsad2----
+# Two-way ANOVA with interaction effect
+placenta_Rsad2_anova_model <- aov(Rsad2 ~ treatment * status, data = p)
+# Get the ANOVA summary
+placenta_Rsad2_anova_summary <- summary(placenta_Rsad2_anova_model)
+
+# Extract p-values for each term
+placenta_rsad2_treatment_pvalue <- placenta_Rsad2_anova_summary[[1]]["treatment       ", "Pr(>F)"]
+placenta_rsad2_status_pvalue <- placenta_Rsad2_anova_summary[[1]]["status          ", "Pr(>F)"]
+placenta_rsad2_interaction_pvalue <- placenta_Rsad2_anova_summary[[1]]["treatment:status", "Pr(>F)"]
+
+# Perform Tukey's HSD test for pairwise comparisons
+placenta_rsad2_tukey <- TukeyHSD(placenta_Rsad2_anova_model)
+placenta_rsad2_status_results <- placenta_rsad2_tukey$status
+
+# Round the p-values to n decimal places
+placenta_rsad2_treatment_pvalue <- round(placenta_rsad2_treatment_pvalue, 3)
+placenta_rsad2_status_pvalue <- round(placenta_rsad2_status_pvalue, 3)
+placenta_rsad2_interaction_pvalue <- round(placenta_rsad2_interaction_pvalue, 3)
+placenta_rsad2_status_results <- round(placenta_rsad2_status_results, 3)
+
+# Create interaction plot and add p-value annotation
+placenta_interaction_Rsad2 <- ggplot(p, aes(x = status, y = Rsad2, color = treatment, group = treatment)) +
+  geom_point(position = position_jitter(width = 0.15, height = 0)) +  # Add jittered points
+  geom_line(stat = "summary", fun = "mean", aes(group = treatment), size = 1.2) +  # Add lines for means
+  geom_errorbar(stat = "summary", fun.data = "mean_se", width = 0.2) +  # Add error bars (standard error)
+  labs(y = "Relative Rsad2", x = NULL) +
+  scale_y_continuous(
+    trans = "log10",  # Use log10 transformation directly
+    limits = c(0.1, 10^3.1),  # Set the limits for the y-axis (positive values only)
+    breaks = c(0.1, 1, 10, 100, 1000),  # Specify breakpoints for clarity
+    expand = c(0, 0),
+    labels = scales::trans_format("log10", scales::math_format(10^.x))) +
+  scale_color_manual(values = c("blue3", "magenta"), guide = "none") +  # Custom color palette
+  theme_classic() +
+  annotation_custom(
+    grob = textGrob(
+      paste(
+        "Treatment ",
+        "\nOutcome ",
+        "\nInteraction "),
+      x = unit(0.1, "npc"), y = unit(0.95, "npc"), just = c("left", "top"), 
+      gp = gpar(fontsize = 7, col = "black"))) +
+  annotation_custom(
+    grob = textGrob(
+      paste(
+        "", ifelse(placenta_rsad2_treatment_pvalue < 0.0001, "****", 
+               ifelse(placenta_rsad2_treatment_pvalue < 0.001, "***", 
+                      ifelse(placenta_rsad2_treatment_pvalue < 0.01, "**", 
+                             ifelse(placenta_rsad2_treatment_pvalue < 0.05, "*", "ns")))),
+        "\n",ifelse(placenta_rsad2_status_pvalue < 0.0001, "****", 
+               ifelse(placenta_rsad2_status_pvalue < 0.001, "***", 
+                      ifelse(placenta_rsad2_status_pvalue < 0.01, "**", 
+                             ifelse(placenta_rsad2_status_pvalue < 0.05, "*", "ns")))),
+        "\n",ifelse(placenta_rsad2_interaction_pvalue < 0.0001, "****", 
+               ifelse(placenta_rsad2_interaction_pvalue < 0.001, "***", 
+                      ifelse(placenta_rsad2_interaction_pvalue < 0.01, "**", 
+                             ifelse(placenta_rsad2_interaction_pvalue < 0.05, "*", "ns"))))),
+      x = unit(0.3, "npc"), y = unit(0.95, "npc"), just = c("left", "top"), 
+      gp = gpar(fontsize = 7, col = "black", fontface = "bold"))) +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 20, face = "bold", color = "blue"),
+    axis.text.x = element_text(size = 11, face = "bold", color = "black"),  
+    axis.text.y = element_text(size = 11, face = "bold", color = "black"),   
+    axis.title.y = element_text(size = 12, face = "bold", color = "black"),
+    legend.position = "none"  # Removed redundant legend position setting
+  )
+
+# Two-way ANOVA with interaction effect
+fetus_Rsad2_anova_model <- aov(Rsad2 ~ treatment * status, data = f)
+fetus_Rsad2_anova_summary <- summary(fetus_Rsad2_anova_model)
+
+# Extract p-values for each term
+fetus_Rsad2_treatment_pvalue <- fetus_Rsad2_anova_summary[[1]]["treatment       ", "Pr(>F)"]
+fetus_Rsad2_status_pvalue <- fetus_Rsad2_anova_summary[[1]]["status          ", "Pr(>F)"]
+fetus_Rsad2_interaction_pvalue <- fetus_Rsad2_anova_summary[[1]]["treatment:status", "Pr(>F)"]
+
+# Perform Tukey's HSD test for pairwise comparisons
+fetus_rsad2_tukey <- TukeyHSD(fetus_Rsad2_anova_model)
+
+rsad2_treatment_results <- fetus_rsad2_tukey$treatment
+rsad2_status_results <- fetus_rsad2_tukey$status
+rsad2_interaction_results <- fetus_rsad2_tukey$`treatment:status`
+
+# Round the p-values to n decimal places
+fetus_rsad2_treatment_pvalue <- round(fetus_Rsad2_treatment_pvalue, 3)
+fetus_rsad2_status_pvalue <- round(fetus_Rsad2_status_pvalue, 3)
+fetus_rsad2_interaction_pvalue <- round(fetus_Rsad2_interaction_pvalue, 3)
+rsad2_status_results <- round(rsad2_status_results, 0)
+
+# Create interaction plot and add p-value annotation
+fetus_interaction_Rsad2 <- ggplot(f, aes(x = status, y = Rsad2, color = treatment, group = treatment)) +
+  geom_point(position = position_jitter(width = 0.15, height = 0), shape = 21, fill = "white", stroke = 0.75) +  # Add jittered points
+  geom_line(stat = "summary", fun = "mean", aes(group = treatment), size = 1.2) +  # Add lines for means
+  geom_errorbar(stat = "summary", fun.data = "mean_se", width = 0.2) +  # Add error bars (standard error)
+  labs(y = NULL, x = NULL) +
+  scale_y_continuous(
+    trans = "log10",  # Use log10 transformation directly
+    limits = c(0.1, 10^3.1),  # Set the limits for the y-axis (positive values only)
+    breaks = c(0.1, 1, 10, 100, 1000),  # Specify breakpoints for clarity
+    expand = c(0, 0),
+    labels = scales::trans_format("log10", scales::math_format(10^.x))) +
+  scale_color_manual(values = c("blue3", "magenta"), guide = "none") +  # Custom color palette
+  theme_classic() +
+  annotation_custom(
+    grob = textGrob(
+      paste(
+        "Treatment ",
+        "\nOutcome ",
+        "\nInteraction "),
+      x = unit(0.1, "npc"), y = unit(0.95, "npc"), just = c("left", "top"), 
+      gp = gpar(fontsize = 7, col = "black"))) +
+  annotation_custom(
+    grob = textGrob(
+      paste(
+        "", ifelse(fetus_rsad2_treatment_pvalue < 0.0001, "****", 
+               ifelse(fetus_rsad2_treatment_pvalue < 0.001, "***", 
+                      ifelse(fetus_rsad2_treatment_pvalue < 0.01, "**", 
+                             ifelse(fetus_rsad2_treatment_pvalue < 0.05, "*", "ns")))),
+        "\n",ifelse(fetus_rsad2_status_pvalue < 0.0001, "****", 
+               ifelse(fetus_rsad2_status_pvalue < 0.001, "***", 
+                      ifelse(fetus_rsad2_status_pvalue < 0.01, "**", 
+                             ifelse(fetus_rsad2_status_pvalue < 0.05, "*", "ns")))),
+        "\n",ifelse(fetus_rsad2_interaction_pvalue < 0.0001, "****", 
+               ifelse(fetus_rsad2_interaction_pvalue < 0.001, "***", 
+                      ifelse(fetus_rsad2_interaction_pvalue < 0.01, "**", 
+                             ifelse(fetus_rsad2_interaction_pvalue < 0.05, "*", "ns"))))),
+      x = unit(0.3, "npc"), y = unit(0.95, "npc"), just = c("left", "top"), 
+      gp = gpar(fontsize = 7, col = "black", fontface = "bold"))) +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 20, face = "bold", color = "blue"),
+    axis.text.x = element_text(size = 11, face = "bold", color = "black"),  
+    axis.text.y = element_text(size = 11, face = "bold", color = "black"),   
+    axis.title.y = element_text(size = 12, face = "bold", color = "black"),
+    legend.position = "none"  # Removed redundant legend position setting
+  )
+
+## Figure 11d: Mx1----
+# Two-way ANOVA with interaction effect
+placenta_mx1_anova_model <- aov(Mx1 ~ treatment * status, data = p)
+placenta_mx1_anova_summary <- summary(placenta_mx1_anova_model)
+
+# Extract p-values for each term
+placenta_mx1_treatment_pvalue <- placenta_mx1_anova_summary[[1]]["treatment       ", "Pr(>F)"]
+placenta_mx1_status_pvalue <- placenta_mx1_anova_summary[[1]]["status          ", "Pr(>F)"]
+placenta_mx1_interaction_pvalue <- placenta_mx1_anova_summary[[1]]["treatment:status", "Pr(>F)"]
+
+# Perform Tukey's HSD test for pairwise comparisons
+placenta_mx1_tukey <- TukeyHSD(placenta_mx1_anova_model)
+placenta_mx1_status_results <- placenta_mx1_tukey$status
+
+# Round the p-values to n decimal places
+placenta_mx1_treatment_pvalue <- round(placenta_mx1_treatment_pvalue, 3)
+placenta_mx1_status_pvalue <- round(placenta_mx1_status_pvalue, 3)
+placenta_mx1_interaction_pvalue <- round(placenta_mx1_interaction_pvalue, 3)
+placenta_mx1_status_results <- round(placenta_mx1_status_results, 3)
+
+# Create interaction plot and add p-value annotation
+placenta_interaction_Mx1 <- ggplot(p, aes(x = status, y = Mx1, color = treatment, group = treatment)) +
+  geom_point(position = position_jitter(width = 0.15, height = 0)) +  # Add jittered points
+  geom_line(stat = "summary", fun = "mean", aes(group = treatment), size = 1.2) +  # Add lines for means
+  geom_errorbar(stat = "summary", fun.data = "mean_se", width = 0.2) +  # Add error bars (standard error)
+  labs(y = "Relative Mx1", x = NULL) +
+  scale_y_continuous(
+    trans = "log10",  # Use log10 transformation directly
+    limits = c(0.1, 10^3),  # Set the limits for the y-axis (positive values only)
+    breaks = c(0.1, 1, 10, 100, 1000),  # Specify breakpoints for clarity
+    labels = scales::trans_format("log10", scales::math_format(10^.x)),
+    expand = c(0, 0)# Format log10 labels
+  ) +
+  scale_color_manual(values = c("blue3", "magenta"), guide = "none") +  # Custom color palette
+  theme_classic() +  # Start with a clean theme
+  # Add p-values to a text box
+  annotation_custom(
+    grob = textGrob(
+      paste(
+        "Treatment ",
+        "\nOutcome ",
+        "\nInteraction "),
+      x = unit(0.1, "npc"), y = unit(0.95, "npc"), just = c("left", "top"), 
+      gp = gpar(fontsize = 7, col = "black"))) +
+  annotation_custom(
+    grob = textGrob(
+      paste(
+        "", ifelse(placenta_mx1_treatment_pvalue < 0.0001, "****", 
+               ifelse(placenta_mx1_treatment_pvalue < 0.001, "***", 
+                      ifelse(placenta_mx1_treatment_pvalue < 0.01, "**", 
+                             ifelse(placenta_mx1_treatment_pvalue < 0.05, "*", "ns")))),
+        "\n",ifelse(placenta_mx1_status_pvalue < 0.0001, "****", 
+               ifelse(placenta_mx1_status_pvalue < 0.001, "***", 
+                      ifelse(placenta_mx1_status_pvalue < 0.01, "**", 
+                             ifelse(placenta_mx1_status_pvalue < 0.05, "*", "ns")))),
+        "\n",ifelse(placenta_mx1_interaction_pvalue < 0.0001, "****", 
+               ifelse(placenta_mx1_interaction_pvalue < 0.001, "***", 
+                      ifelse(placenta_mx1_interaction_pvalue < 0.01, "**", 
+                             ifelse(placenta_mx1_interaction_pvalue < 0.05, "*", "ns"))))),
+      x = unit(0.3, "npc"), y = unit(0.95, "npc"), just = c("left", "top"), 
+      gp = gpar(fontsize = 7, col = "black", fontface = "bold"))) +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 20, face = "bold", color = "blue"),
+    axis.text.x = element_text(size = 11, face = "bold", color = "black"),  # Make x-axis tick labels bold
+    axis.text.y = element_text(size = 11, face = "bold", color = "black"),  # Make y-axis tick labels bold
+    axis.title.y = element_text(size = 12, face = "bold", color = "black"),
+    legend.position = "none"  # Remove legend
+  )
+
+# Two-way ANOVA with interaction effect
+fetus_mx1_anova_model <- aov(Mx1 ~ treatment * status, data = f)
+fetus_mx1_anova_summary <- summary(fetus_mx1_anova_model)
+
+# Extract p-values for each term
+fetus_mx1_treatment_pvalue <- fetus_mx1_anova_summary[[1]]["treatment       ", "Pr(>F)"]
+fetus_mx1_status_pvalue <- fetus_mx1_anova_summary[[1]]["status          ", "Pr(>F)"]
+fetus_mx1_interaction_pvalue <- fetus_mx1_anova_summary[[1]]["treatment:status", "Pr(>F)"]
+
+# Perform Tukey's HSD test for pairwise comparisons
+fetus_mx1_tukey <- TukeyHSD(fetus_mx1_anova_model)
+
+mx1_treatment_results <- fetus_mx1_tukey$treatment
+mx1_status_results <- fetus_mx1_tukey$status
+mx1_interaction_results <- fetus_mx1_tukey$`treatment:status`
+
+# Round the p-values to n decimal places
+fetus_mx1_treatment_pvalue <- round(fetus_mx1_treatment_pvalue, 3)
+fetus_mx1_status_pvalue <- round(fetus_mx1_status_pvalue, 3)
+fetus_mx1_interaction_pvalue <- round(fetus_mx1_interaction_pvalue, 3)
+mx1_status_results <- round(mx1_status_results, 3)
+
+# Create interaction plot and add p-value annotation
+fetus_interaction_Mx1 <- ggplot(f, aes(x = status, y = Mx1, color = treatment, group = treatment)) +
+  geom_point(position = position_jitter(width = 0.15, height = 0), shape = 21, fill = "white", stroke = 0.75) +  # Add jittered points
+  geom_line(stat = "summary", fun = "mean", aes(group = treatment), size = 1.2) +  # Add lines for means
+  geom_errorbar(stat = "summary", fun.data = "mean_se", width = 0.2) +  # Add error bars (standard error)
+  labs(y = NULL, x = NULL) +
+  scale_y_continuous(
+    trans = "log10",  # Use log10 transformation directly
+    limits = c(0.1, 10^3),  # Set the limits for the y-axis (positive values only)
+    breaks = c(0.1, 1, 10, 100, 1000),  # Specify breakpoints for clarity
+    expand = c(0, 0),
+    labels = scales::trans_format("log10", scales::math_format(10^.x))) +
+  scale_color_manual(values = c("blue3", "magenta"), guide = "none") +  # Custom color palette
+  theme_classic() +
+  annotation_custom(
+    grob = textGrob(
+      paste(
+        "Treatment ",
+        "\nOutcome ",
+        "\nInteraction "),
+      x = unit(0.1, "npc"), y = unit(0.95, "npc"), just = c("left", "top"), 
+      gp = gpar(fontsize = 7, col = "black"))) +
+  annotation_custom(
+    grob = textGrob(
+      paste(
+        "", ifelse(fetus_mx1_treatment_pvalue < 0.0001, "****", 
+               ifelse(fetus_mx1_treatment_pvalue < 0.001, "***", 
+                      ifelse(fetus_mx1_treatment_pvalue < 0.01, "**", 
+                             ifelse(fetus_mx1_treatment_pvalue < 0.05, "*", "ns")))),
+        "\n",ifelse(fetus_mx1_status_pvalue < 0.0001, "****", 
+               ifelse(fetus_mx1_status_pvalue < 0.001, "***", 
+                      ifelse(fetus_mx1_status_pvalue < 0.01, "**", 
+                             ifelse(fetus_mx1_status_pvalue < 0.05, "*", "ns")))),
+        "\n",ifelse(fetus_mx1_interaction_pvalue < 0.0001, "****", 
+               ifelse(fetus_mx1_interaction_pvalue < 0.001, "***", 
+                      ifelse(fetus_mx1_interaction_pvalue < 0.01, "**", 
+                             ifelse(fetus_mx1_interaction_pvalue < 0.05, "*", "ns"))))),
+      x = unit(0.3, "npc"), y = unit(0.95, "npc"), just = c("left", "top"), 
+      gp = gpar(fontsize = 7, col = "black", fontface = "bold"))) +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 20, face = "bold", color = "blue"),
+    axis.text.x = element_text(size = 11, face = "bold", color = "black"),  
+    axis.text.y = element_text(size = 11, face = "bold", color = "black"),   
+    axis.title.y = element_text(size = 12, face = "bold", color = "black"),
+    legend.position = "none"  # Removed redundant legend position setting
+  )
+
