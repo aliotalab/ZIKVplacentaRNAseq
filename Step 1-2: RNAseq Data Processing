@@ -1,4 +1,4 @@
-## Step 0: Load libraries----
+## Load libraries----
 library(rmarkdown)
 library(tinytex)
 library(knitr)
