@@ -1,4 +1,4 @@
-## Figure 11: RIG012 interaction plots----
+## Figure 8: RIG012 interaction plots----
 library(rmarkdown)
 library(tinytex)
 library(knitr)
@@ -21,7 +21,7 @@ f$Rsad2 <- as.numeric(f$Rsad2) #ensure qRT-PCR data is read as numeric
 f$IFNb <- as.numeric(f$IFNb)
 f$Mx1 <- as.numeric(f$Mx1)
 
-## Figure 11a: vRNA----
+## Figure 8a: vRNA----
 # Two-way ANOVA with interaction effect
 placenta_vl_anova_model <- aov(viralload ~ treatment * status, data = p)
 placenta_vl_anova_summary <- summary(placenta_vl_anova_model)
@@ -160,7 +160,7 @@ fetus_interaction_viralload <- ggplot(f, aes(x = status, y = viralload, color = 
     legend.position = "none"  # Removed redundant legend position setting
   )
 
-## Figure 11b: Ifnb----
+## Figure 8b: Ifnb----
 # Two-way ANOVA with interaction effect
 placenta_ifnb_anova_model <- aov(IFNb ~ treatment * status, data = p)
 placenta_ifnb_anova_summary <- summary(placenta_ifnb_anova_model)
@@ -295,7 +295,7 @@ fetus_interaction_IFNb <- ggplot(f, aes(x = status, y = IFNb, color = treatment,
     legend.position = "none"  # Removed redundant legend position setting
   )
 
-## Figure 11c: Rsad2----
+## Figure 8c: Rsad2----
 # Two-way ANOVA with interaction effect
 placenta_Rsad2_anova_model <- aov(Rsad2 ~ treatment * status, data = p)
 # Get the ANOVA summary
@@ -432,7 +432,7 @@ fetus_interaction_Rsad2 <- ggplot(f, aes(x = status, y = Rsad2, color = treatmen
     legend.position = "none"  # Removed redundant legend position setting
   )
 
-## Figure 11d: Mx1----
+## Figure 8d: Mx1----
 # Two-way ANOVA with interaction effect
 placenta_mx1_anova_model <- aov(Mx1 ~ treatment * status, data = p)
 placenta_mx1_anova_summary <- summary(placenta_mx1_anova_model)
