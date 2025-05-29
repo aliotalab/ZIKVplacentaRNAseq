@@ -1,0 +1,227 @@
+## Figure 6: Construct .csv file from RNAseq average differential gene expression for Pathview analysis----
+
+# Write column with log 2 fold change between BRA and PBS groups
+myTopHitsBRA.df.pathview <- myTopHitsBRA.df %>%
+  rename(BRAlogFC = logFC)
+
+# Write column with log 2 fold change between MEX and PBS groups
+myTopHitsMEX.df.pathview <- myTopHitsMEX.df %>%
+  rename(MEXlogFC = logFC)
+
+ZIKVpathview_df <- merge(myTopHitsBRA.df.pathview, myTopHitsMEX.df.pathview, by = "geneID")
+ZIKVpathview_df <- ZIKVpathview_df[, c("geneID", "BRAlogFC", "MEXlogFC")]
+ZIKVpathview_df$PBSlogFC <- 0
+head(ZIKVpathview_df) #df should display three columns: geneID, BRAlogFC, MEXlogFC
+
+write_csv(ZIKVpathview_df, file = ~/directorylocation/pathviewfilename.csv) #save file
+
+#To conduct Pathview analysis, visit https://pathview.uncc.edu/
+
+#create a histogram log 2 fold change between treatment groups
+
+```{r manual KEGG mapping genes Box and Whisker plot with all genes}
+# Step 1: Read in the files (example assumes tab-separated files)
+RLRgeneshisto <- read.table("RLRgenesKEGGhisto.txt", header = TRUE, sep = "\t")
+TLRgeneshisto <- read.table("TLRgenesKEGGhisto.txt", header = TRUE, sep = "\t")
+colnames(RLRgeneshisto)
+colnames(TLRgeneshisto)
+merged_data <- Reduce(function(x, y) merge(x, y, by = "geneID", all = TRUE), list(RLRgeneshisto, TLRgeneshisto))
+
+# Create 'bin' column with the correct conditions
+merged_data$bin <- ifelse(is.na(merged_data$pathway.x), "TLR", 
+                          ifelse(is.na(merged_data$pathway.y), "RLR", 
+                                 ifelse(!is.na(merged_data$pathway.x) & !is.na(merged_data$pathway.y), "BOTH", NA)))
+
+# Merge MX5 vs MEX expression data with merged_data on the 'geneID' column
+merged_data_MX5vsMEX <- merge(merged_data, myTopHitsMX5vsMEX.df, by = "geneID", all.x = FALSE)
+merged_data_MX5vsMEX <- merged_data_MX5vsMEX %>%
+  mutate(log10adjp = -log10(adj.P.Val))
+
+# Create a boxplot to show the distribution of logFC by bin
+MX5vsMEXbox <- ggplot(merged_data_MX5vsMEX, aes(x = bin, y = logFC)) +
+  # Boxplot with fill based on bin
+  geom_boxplot(aes(fill = bin), alpha = 0.5, color = "black", outlier.size = 0, outlier.color = "white") +  # Boxplot transparency, color, and no outliers
+  # Jittered points colored by log10 of adj.P.Val (adjust this according to your column name)
+  geom_jitter(aes(color = log10adjp), 
+              size = 1.5, alpha = 1, shape = 19, width = 0.2, height = 0) +  # Jitter points for visibility
+  # Label points with geneID
+  geom_text(aes(label = geneID), 
+            position = position_jitter(width = 0.2, height = 0),  # Small horizontal jitter for label positioning
+            size = 2, check_overlap = TRUE, vjust = -0.1) + 
+  # Title and axis labels
+  labs(title = "MX5 vs MEX",
+       x = "Bin",
+       y = "logFC") +
+  # Theme for the plot
+  ylim(c(-0.5, 1.5)) +  # Set x-axis limits (example: 1 to 3)
+  theme_classic() +
+  # Color scale for the jittered points based on adj.P.Val
+  scale_color_gradient(
+    low = "red",        # Color for high p-values
+    high = "blue",      # Color for low p-values
+    name = "-log10(p.adjust)",  # Legend title for the color scale
+    limits = c(0, 25),  # Set the p-value range for the color scale (adjust as needed)
+    breaks = seq(0, 25, by = 5)  # Control the tick marks on the p-value scale (adjust as needed)
+  ) +
+  theme(legend.position = "none") +
+  # Set the fill color for the boxplots
+  scale_fill_manual(values = c("TLR" = "gray90", "RLR" = "gray90", "BOTH" = "gray90"))
+
+# Merge BRA vs MEX expression data with merged_data on the 'geneID' column
+merged_data_BRAvsMEX <- merge(merged_data, myTopHitsBRAvsMEX.df, by = "geneID", all.x = FALSE)
+merged_data_BRAvsMEX <- merged_data_BRAvsMEX %>%
+  mutate(log10adjp = -log10(adj.P.Val))
+
+# Create a boxplot to show the distribution of logFC by bin
+BRAvsMEXbox <- ggplot(merged_data_BRAvsMEX, aes(x = bin, y = logFC)) +
+  # Boxplot with fill based on bin
+  geom_boxplot(aes(fill = bin), alpha = 0.5, color = "black", outlier.size = 0, outlier.color = "white") +  # Boxplot transparency, color, and no outliers
+  # Jittered points colored by log10 of adj.P.Val (adjust this according to your column name)
+  geom_jitter(aes(color = log10adjp), 
+              size = 1.5, alpha = 1, shape = 19, width = 0.2, height = 0) +  # Jitter points for visibility
+  # Label points with geneID
+  geom_text(aes(label = geneID), 
+            position = position_jitter(width = 0.2, height = 0),  # Small horizontal jitter for label positioning
+            size = 2, check_overlap = TRUE, vjust = -0.1) + 
+  # Title and axis labels
+  labs(title = "BRA vs MEX",
+       x = "Bin",
+       y = "logFC") +
+  # Theme for the plot
+  theme_classic() +
+  ylim(c(-0.5, 1.5)) +  # Set x-axis limits (example: 1 to 3)
+  # Color scale for the jittered points based on adj.P.Val
+  scale_color_gradient(
+    low = "red",        # Color for high p-values
+    high = "blue",      # Color for low p-values
+    name = "-log10(p.adjust)",  # Legend title for the color scale
+    limits = c(0, 25),  # Set the p-value range for the color scale (adjust as needed)
+    breaks = seq(0, 25, by = 5)  # Control the tick marks on the p-value scale (adjust as needed)
+  ) +
+  theme(legend.position = "none") +
+  # Set the fill color for the boxplots
+  scale_fill_manual(values = c("TLR" = "gray90", "RLR" = "gray90", "BOTH" = "gray90"))
+
+# Merge MX5 vs BRA expression data with merged_data on the 'geneID' column
+merged_data_MX5vsBRA <- merge(merged_data, myTopHitsMX5vsBRA.df, by = "geneID", all.x = FALSE)
+merged_data_MX5vsBRA <- merged_data_MX5vsBRA %>%
+  mutate(log10adjp = -log10(adj.P.Val))
+
+# Create a boxplot to show the distribution of logFC by bin
+MX5vsBRAbox <- ggplot(merged_data_MX5vsBRA, aes(x = bin, y = logFC)) +
+  # Boxplot with fill based on bin
+  geom_boxplot(aes(fill = bin), alpha = 0.5, color = "black", outlier.size = 0, outlier.color = "white") +  # Boxplot transparency, color, and no outliers
+  # Jittered points colored by log10 of adj.P.Val (adjust this according to your column name)
+  geom_jitter(aes(color = log10adjp), 
+              size = 1.5, alpha = 1, shape = 19, width = 0.2, height = 0) +  # Jitter points for visibility
+  # Label points with geneID
+  geom_text(aes(label = geneID), 
+            position = position_jitter(width = 0.2, height = 0),  # Small horizontal jitter for label positioning
+            size = 2, check_overlap = TRUE, vjust = -0.1) + 
+  # Title and axis labels
+  labs(title = "MX5 vs BRA",
+       x = "Bin",
+       y = "logFC") +
+  # Theme for the plot
+  ylim(c(-0.5, 1.5)) +  # Set x-axis limits (example: 1 to 3)
+  theme_classic() +
+  # Color scale for the jittered points based on adj.P.Val
+  scale_color_gradient(
+    low = "red",        # Color for high p-values
+    high = "blue",      # Color for low p-values
+    name = "-log10(p.adjust)",  # Legend title for the color scale
+    limits = c(0, 25),  # Set the p-value range for the color scale (adjust as needed)
+    breaks = seq(0, 25, by = 5)  # Control the tick marks on the p-value scale (adjust as needed)
+  ) +
+  theme(legend.position = "none") +
+  # Set the fill color for the boxplots
+  scale_fill_manual(values = c("TLR" = "gray90", "RLR" = "gray90", "BOTH" = "gray90"))
+
+plot_grid(BRAvsMEXbox, MX5vsMEXbox, MX5vsBRAbox, ncol = 3)
+
+```{r manual KEGG mapping genes Bar plots}
+#make gene lists of KEGG genes specific to RLR or TLR pathways
+RLRgenesONLY <- readLines("RLRgenesKEGG.txt")
+TLRgenesONLY <- readLines("TLRgenesKEGG.txt") 
+commongenes <- readLines("commongenesKEGG.txt") 
+
+#reverse so genes are in the order in which they appear in the pathway
+RLRgenesONLY <- rev(RLRgenesONLY)
+TLRgenesONLY <- rev(TLRgenesONLY)
+commongenes <- rev(commongenes)
+```
+
+```{r manual KEGG mapping bar plot BRA vs MEX}
+# Subset data to include only genes of interest in RLR pathway
+myTopHitsBRAvsMEX.df.pathview <- myTopHitsBRAvsMEX.df %>%
+  rename(BRAvsMEXlogFC = logFC) %>%
+  rename(BRAvsMEXadjp = adj.P.Val)
+
+myTopHitsBRAvsMEX.df.pathview <- myTopHitsBRAvsMEX.df.pathview %>%
+  mutate(log10BRAvsMEXadjp = -log10(BRAvsMEXadjp))
+
+# Subset for RLR genes only
+myTopHitsBRAvsMEX.df.RLR <- myTopHitsBRAvsMEX.df.pathview[myTopHitsBRAvsMEX.df.pathview$geneID %in% RLRgenesONLY, ]
+# Reorder geneID based on gene list order
+myTopHitsBRAvsMEX.df.RLR$geneID <- factor(myTopHitsBRAvsMEX.df.RLR$geneID, 
+                                                levels = RLRgenesONLY)
+
+# Create the plot
+BRAvsMEX_RLR <- ggplot(myTopHitsBRAvsMEX.df.RLR, aes(x = BRAvsMEXlogFC, y = geneID, fill = log10BRAvsMEXadjp)) +
+  geom_bar(stat = "identity") +
+  scale_fill_gradient(
+    low = "red",        # Color for high p-values
+    high = "blue",      # Color for low p-values
+    name = "-log10(p.adjust)",  # Legend title
+    limits = c(0, 25), # Set the p-value range for the color scale (adjust as needed)
+    breaks = seq(0, 25, by = 5) # Control the tick marks on the p-value scale (adjust as needed)
+  ) +
+  theme_light() +
+  theme(legend.position = "none") + # Removes the legend
+  xlim(c(-0.5, 1.25))  # Set x-axis limits (example: 1 to 3)
+
+# Subset data to include only genes of interest in TLR pathway
+myTopHitsBRAvsMEX.df.TLR <- myTopHitsBRAvsMEX.df.pathview[myTopHitsBRAvsMEX.df.pathview$geneID %in% TLRgenesONLY, ]
+
+# Reorder geneID based on gene list order
+myTopHitsBRAvsMEX.df.TLR$geneID <- factor(myTopHitsBRAvsMEX.df.TLR$geneID, 
+                                                levels = TLRgenesONLY)
+
+# Create the plot
+BRAvsMEX_TLR <- ggplot(myTopHitsBRAvsMEX.df.TLR, aes(x = BRAvsMEXlogFC, y = geneID, fill = log10BRAvsMEXadjp)) +
+  geom_bar(stat = "identity") +
+  scale_fill_gradient(
+    low = "red",        # Color for high p-values
+    high = "blue",      # Color for low p-values
+    name = "-log10(p.adjust)",  # Legend title
+    limits = c(0, 25), # Set the p-value range for the color scale (adjust as needed)
+    breaks = seq(0, 25, by = 5) # Control the tick marks on the p-value scale (adjust as needed)
+  ) +
+  theme_light() +
+  theme(legend.position = "none") + # Removes the legend
+  xlim(c(-0.5, 1.25))  # Set x-axis limits (example: 1 to 3)
+
+# Subset for Common genes only
+myTopHitsBRAvsMEX.df.common <- myTopHitsBRAvsMEX.df.pathview[myTopHitsBRAvsMEX.df.pathview$geneID %in% commongenes, ]
+
+# Reorder geneID based on gene list order
+myTopHitsBRAvsMEX.df.common$geneID <- factor(myTopHitsBRAvsMEX.df.common$geneID, 
+                                                levels = commongenes)
+
+# Create the plot
+BRAvsMEX_common <- ggplot(myTopHitsBRAvsMEX.df.common, aes(x = BRAvsMEXlogFC, y = geneID, fill = log10BRAvsMEXadjp)) +
+  geom_bar(stat = "identity") +
+  scale_fill_gradient(
+    low = "red",        # Color for high p-values
+    high = "blue",      # Color for low p-values
+    name = "-log10(p.adjust)",  # Legend title
+    limits = c(0, 25), # Set the p-value range for the color scale (adjust as needed)
+    breaks = seq(0, 25, by = 5) # Control the tick marks on the p-value scale (adjust as needed)
+  ) +
+  theme_light() +
+  theme(legend.position = "none") + # Removes the legend
+  xlim(c(-0.5, 1.25))  # Set x-axis limits (example: 1 to 3)
+
+```
+
+
